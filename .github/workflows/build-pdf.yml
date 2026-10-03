@@ -1,0 +1,55 @@
+name: build-pdf
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: typst-community/setup-typst@v3
+
+      - name: Compile
+        run: |
+          typst compile breatheoss-charter-v0.2.typ charter.pdf
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf
+          path: charter.pdf
+          if-no-files-found: error
+
+      - name: Release (latest)
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Charter (latest)"
+          body: |
+            Automated PDF build from `main` (${{ github.sha }}).
+          files: |
+            charter.pdf
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release (version)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Charter ${{ github.ref_name }}"
+          generate_release_notes: true
+          files: |
+            charter.pdf
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

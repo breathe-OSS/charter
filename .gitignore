@@ -1,0 +1,6 @@
+*.pdf
+.typst/
+*.tmp
+*.orig
+.DS_Store
+Thumbs.db
